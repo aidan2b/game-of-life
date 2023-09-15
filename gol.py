@@ -18,12 +18,19 @@ pg.display.set_caption("Conway's Game of Life")
 
 def init_grid(width, height):
 
-    return [[random.choice([0, 1]) for x in range(width)] for y in range(height)]
+    live_cells = set()
 
+    for y in range(height):
+        for x in range(width):
+            if random.choice([0,1]):
+                live_cells.add((x,y))
+
+    return live_cells
+    
 # Counts the number of living neighbors for a given cell
-def count_neighbors(grid, x, y):
+def count_neighbors(live_cells, x, y):
 
-    neighbors = [
+    neighbors_offsets = [
         (-1, -1), (-1, 0), (-1, 1),
         (0, -1),           (0, 1),
         (1, -1),  (1, 0),  (1, 1),
@@ -32,43 +39,47 @@ def count_neighbors(grid, x, y):
     count = 0
 
     # Loop through each neighbor offset and check if the neighbor is within the grid boundaries and alive
-    for dx, dy in neighbors:
-        nx, ny = x + dx, y + dy
-        if 0 <= nx < COLS and 0 <= ny < ROWS:
-            count += grid[ny][nx]
+    for dx, dy in neighbors_offsets:
+        if (x + dx, y + dy) in live_cells:
+            count += 1
     return count
 
 # Apply the rules of Conway's Game of Life
-def update_grid(grid):
+def update_grid(live_cells):
 
-    new_grid = [[0 for x in range(WIDTH)] for y in range(HEIGHT)]
+    new_live_cells = set()
 
-    for y in range(ROWS):
-        for x in range(COLS):
+    neighbors_offsets = [
+        (-1, -1), (-1, 0), (-1, 1),
+        (0, -1),           (0, 1),
+        (1, -1),  (1, 0),  (1, 1),
+    ]
 
-            neighbors = count_neighbors(grid, x, y)
+    potential_cells = live_cells.union({(x+dx, y+dy) for x,y in live_cells
+                                           for dx, dy in neighbors_offsets})
 
-            # A living cell with < 2 or > 3 living neighbors will die
-            if grid[y][x] == 1 and (neighbors < 2 or neighbors > 3):
-                new_grid[y][x] = 0
+    for cell in potential_cells:
+        x, y = cell
+        count = count_neighbors(live_cells, x, y)
+        if cell in live_cells and (count == 2 or count == 3):
+            new_live_cells.add(cell)
+        elif cell not in live_cells and count == 3:
+            new_live_cells.add(cell)
 
-            # A dead cell with exactly 3 living neighbors becomes alive
-            elif grid[y][x] == 0 and neighbors == 3:
-                new_grid[y][x] = 1
-
-            # All other cells retain their current state
-            else:
-                new_grid[y][x] = grid[y][x]
-    return new_grid
+    return new_live_cells
 
 # Drawing the grid
-def draw_grid(grid, screen):
-    for y in range(ROWS):
-        for x in range(COLS):
-            color = BLACK if grid[y][x] else WHITE
+def draw_grid(live_cells, screen, changed_cells=None):
+    if changed_cells is None:
+        screen.fill(WHITE)
+        for cell in live_cells:
+            x, y = cell
+            pg.draw.rect(screen, BLACK, (x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE))
+    else:
+        for cell in changed_cells:
+            x, y = cell
+            color = BLACK if cell in live_cells else WHITE
             pg.draw.rect(screen, color, (x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE))
-            pg.draw.line(screen, (200, 200, 200), (x * CELL_SIZE, 0), (x * CELL_SIZE, HEIGHT))
-            pg.draw.line(screen, (200, 200, 200), (0, y * CELL_SIZE), (WIDTH, y * CELL_SIZE))
 
 def main():
     grid = init_grid(COLS, ROWS)
@@ -82,14 +93,21 @@ def main():
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 running = False
+
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_SPACE:
                     paused = not paused
+
             if event.type == pg.MOUSEBUTTONDOWN:
                 x, y = pg.mouse.get_pos()
                 x //= CELL_SIZE
                 y //= CELL_SIZE
-                grid[y][x] = 1 if grid[y][x] == 0 else 0 # Toggle cell state
+                cell = (x, y)
+
+                if cell in grid:
+                    grid.remove(cell)
+                else:
+                    grid.add(cell)
 
         if not paused:
             grid = update_grid(grid)
