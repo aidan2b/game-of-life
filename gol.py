@@ -9,12 +9,17 @@ CELL_SIZE = 10
 ROWS, COLS = HEIGHT // CELL_SIZE, WIDTH // CELL_SIZE
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
+GREEN = (0, 255, 0)
+INITIAL_SPEED = 10
+MIN_SPEED = 1
+MAX_SPEED = 60
 
 # Offets for checking neighboring cells in the grid
 NEIGHBORS = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
 
 # Initialize the pygame library
 pg.init()
+pg.font.init()
 
 # Set up the display window for the simulation
 screen = pg.display.set_mode((WIDTH, HEIGHT))
@@ -45,14 +50,20 @@ def draw_grid(live_cells):
 dragging, last_modified_cell = False, None
 
 # Handle user inputs/events like quit, pause, or adding/removing cells
-def handle_event(event, grid):
+def handle_event(event, grid, fps):
     global dragging, last_modified_cell
 
     if event.type == pg.QUIT:
-        return False
+        return False, fps
 
     if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
-        return 'toggle_pause'
+        return 'toggle_pause', fps
+
+    if event.type == pg.KEYDOWN and event.key == pg.K_UP and fps < MAX_SPEED:
+        fps += 1
+
+    if event.type == pg.KEYDOWN and event.key == pg.K_DOWN and fps > MIN_SPEED:
+        fps -= 1
 
     x, y = pg.mouse.get_pos()
     cell = (x // CELL_SIZE, y // CELL_SIZE)
@@ -63,11 +74,40 @@ def handle_event(event, grid):
         last_modified_cell = cell
     elif event.type == pg.MOUSEBUTTONUP:
         dragging, last_modified_cell = False, None
-        return True
+        return True, fps
     elif event.type == pg.MOUSEMOTION and dragging and cell != last_modified_cell:
         grid ^= {cell}
         last_modified_cell = cell
-    return True
+
+    return True, fps
+
+# Draw statistics on the screen
+# Additional colors and font initialization
+
+BORDER_COLOR = (255, 255, 255)
+font_small = pg.font.Font(None, 36)
+
+def display_statistics(grid, generation, fps, clock):
+    # Get the number of live cells
+    num_live_cells = len(grid)
+
+    # Render text for stats
+    live_cells_text = font_small.render(f'Live Cells: {num_live_cells}', True, BLACK)
+    generation_text = font_small.render(f'Generation: {generation}', True, BLACK)
+    fps_text = font_small.render(f'FPS: {int(clock.get_fps())}', True, GREEN)
+
+    # Create a white background surface for stats and draw a border around it
+    stats_bg = pg.Surface((WIDTH//3, 75))
+    stats_bg.fill(WHITE)
+    pg.draw.rect(stats_bg, BORDER_COLOR, stats_bg.get_rect(), 3)  # 3 pixels border width
+
+    # Blit the statistics text onto the stats background surface
+    stats_bg.blit(live_cells_text, (10, 5))
+    stats_bg.blit(generation_text, (10, 40))
+
+    # Draw the stats background surface and FPS text onto the main screen
+    screen.blit(stats_bg, (10, HEIGHT - 85))
+    screen.blit(fps_text, (WIDTH - 100, 10))
 
 # Run the simulation
 def main():
@@ -75,23 +115,31 @@ def main():
     clock = pg.time.Clock()
     running = True
     paused = False
+    generation = 0
+    fps = INITIAL_SPEED
+
+    # Create a font object for statistics display
+    font = pg.font.SysFont(None, 24)
 
     while running:
         screen.fill(WHITE)
 
         for event in pg.event.get():
-            result = handle_event(event, grid)
+            result, new_fps = handle_event(event, grid, fps)
             if result == False:
                 running = False
             if result == 'toggle_pause':
                 paused = not paused
+            fps = new_fps
 
         if not paused:
             grid = update_grid(grid)
+            generation += 1
 
         draw_grid(grid)
+        display_statistics(grid, generation, 10, clock)
         pg.display.flip()
-        clock.tick(10)
+        clock.tick(fps)
 
     pg.quit()
 

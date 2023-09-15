@@ -6,7 +6,7 @@
 * Sparse Representation: Storing only the live cells in a set.
 * Avoid Redundant Drawing: Only redraw the changed cells instead of the entire grid.
 
-### User Interface Enhancements:
+### User Interface Enhancements [ ]:
 * Zoom In/Out: Allow the user to zoom in or out, especially if the grid size is large.
 * Drag and Move: Implement a feature to move around the grid.
 * Predefined Patterns: Allow the user to select and place predefined patterns (like gliders or spaceships).
