@@ -3,84 +3,73 @@
 import random
 import pygame as pg
 
-# Constants
+# Constants for the display setting and colors
 WIDTH, HEIGHT = 800, 800
 CELL_SIZE = 10
 ROWS, COLS = HEIGHT // CELL_SIZE, WIDTH // CELL_SIZE
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 
+# Offets for checking neighboring cells in the grid
+NEIGHBORS = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
+
+# Initialize the pygame library
 pg.init()
 
-# Initialization
+# Set up the display window for the simulation
 screen = pg.display.set_mode((WIDTH, HEIGHT))
 pg.display.set_caption("Conway's Game of Life")
 
+# Initialize the grid with random cells
 def init_grid(width, height):
+    return {(x, y) for y in range(height) for x in range(width) if random.choice([0, 1])}
 
-    live_cells = set()
-
-    for y in range(height):
-        for x in range(width):
-            if random.choice([0,1]):
-                live_cells.add((x,y))
-
-    return live_cells
-    
-# Counts the number of living neighbors for a given cell
+# Count the number of living neighbors for a given cell
 def count_neighbors(live_cells, x, y):
+    return sum((x + dx, y + dy) in live_cells for dx, dy in NEIGHBORS)
 
-    neighbors_offsets = [
-        (-1, -1), (-1, 0), (-1, 1),
-        (0, -1),           (0, 1),
-        (1, -1),  (1, 0),  (1, 1),
-    ]
-
-    count = 0
-
-    # Loop through each neighbor offset and check if the neighbor is within the grid boundaries and alive
-    for dx, dy in neighbors_offsets:
-        if (x + dx, y + dy) in live_cells:
-            count += 1
-    return count
-
-# Apply the rules of Conway's Game of Life
+# Update the grid based on the Game of Life rules
 def update_grid(live_cells):
+    potential_cells = live_cells.union({(x + dx, y + dy) for x, y in live_cells for dx, dy in NEIGHBORS})
+    is_alive = lambda cell: (cell in live_cells and 2 <= count_neighbors(live_cells, *cell) <= 3) or count_neighbors(live_cells, *cell) == 3
+    return {cell for cell in potential_cells if is_alive(cell)}
 
-    new_live_cells = set()
+# Draw the live cells on the grid
+def draw_grid(live_cells):
+    screen.fill(WHITE)
 
-    neighbors_offsets = [
-        (-1, -1), (-1, 0), (-1, 1),
-        (0, -1),           (0, 1),
-        (1, -1),  (1, 0),  (1, 1),
-    ]
+    for x, y in live_cells:
+        pg.draw.rect(screen, BLACK, (x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE))
 
-    potential_cells = live_cells.union({(x+dx, y+dy) for x,y in live_cells
-                                           for dx, dy in neighbors_offsets})
+# Variables to track dragging and the last modified cell during a drag
+dragging, last_modified_cell = False, None
 
-    for cell in potential_cells:
-        x, y = cell
-        count = count_neighbors(live_cells, x, y)
-        if cell in live_cells and (count == 2 or count == 3):
-            new_live_cells.add(cell)
-        elif cell not in live_cells and count == 3:
-            new_live_cells.add(cell)
+# Handle user inputs/events like quit, pause, or adding/removing cells
+def handle_event(event, grid):
+    global dragging, last_modified_cell
 
-    return new_live_cells
+    if event.type == pg.QUIT:
+        return False
 
-# Drawing the grid
-def draw_grid(live_cells, screen, changed_cells=None):
-    if changed_cells is None:
-        screen.fill(WHITE)
-        for cell in live_cells:
-            x, y = cell
-            pg.draw.rect(screen, BLACK, (x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE))
-    else:
-        for cell in changed_cells:
-            x, y = cell
-            color = BLACK if cell in live_cells else WHITE
-            pg.draw.rect(screen, color, (x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE))
+    if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
+        return 'toggle_pause'
 
+    x, y = pg.mouse.get_pos()
+    cell = (x // CELL_SIZE, y // CELL_SIZE)
+
+    if event.type == pg.MOUSEBUTTONDOWN:
+        dragging = True
+        grid ^= {cell}
+        last_modified_cell = cell
+    elif event.type == pg.MOUSEBUTTONUP:
+        dragging, last_modified_cell = False, None
+        return True
+    elif event.type == pg.MOUSEMOTION and dragging and cell != last_modified_cell:
+        grid ^= {cell}
+        last_modified_cell = cell
+    return True
+
+# Run the simulation
 def main():
     grid = init_grid(COLS, ROWS)
     clock = pg.time.Clock()
@@ -91,28 +80,16 @@ def main():
         screen.fill(WHITE)
 
         for event in pg.event.get():
-            if event.type == pg.QUIT:
+            result = handle_event(event, grid)
+            if result == False:
                 running = False
-
-            if event.type == pg.KEYDOWN:
-                if event.key == pg.K_SPACE:
-                    paused = not paused
-
-            if event.type == pg.MOUSEBUTTONDOWN:
-                x, y = pg.mouse.get_pos()
-                x //= CELL_SIZE
-                y //= CELL_SIZE
-                cell = (x, y)
-
-                if cell in grid:
-                    grid.remove(cell)
-                else:
-                    grid.add(cell)
+            if result == 'toggle_pause':
+                paused = not paused
 
         if not paused:
             grid = update_grid(grid)
 
-        draw_grid(grid, screen)
+        draw_grid(grid)
         pg.display.flip()
         clock.tick(10)
 
