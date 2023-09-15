@@ -1,10 +1,21 @@
 #!/usr/bin/env python3
 
 import random
+import pygame as pg
 
-WIDTH, HEIGHT = 10,10
+# Constants
+WIDTH, HEIGHT = 800, 800
+CELL_SIZE = 10
+ROWS, COLS = HEIGHT // CELL_SIZE, WIDTH // CELL_SIZE
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
 
-# Initializes the game board
+pg.init()
+
+# Initialization
+screen = pg.display.set_mode((WIDTH, HEIGHT))
+pg.display.set_caption("Conway's Game of Life")
+
 def init_grid(width, height):
 
     return [[random.choice([0, 1]) for x in range(width)] for y in range(height)]
@@ -23,7 +34,7 @@ def count_neighbors(grid, x, y):
     # Loop through each neighbor offset and check if the neighbor is within the grid boundaries and alive
     for dx, dy in neighbors:
         nx, ny = x + dx, y + dy
-        if 0 <= nx < WIDTH and 0 <= ny < HEIGHT:
+        if 0 <= nx < COLS and 0 <= ny < ROWS:
             count += grid[ny][nx]
     return count
 
@@ -32,8 +43,8 @@ def update_grid(grid):
 
     new_grid = [[0 for x in range(WIDTH)] for y in range(HEIGHT)]
 
-    for y in range(HEIGHT):
-        for x in range(WIDTH):
+    for y in range(ROWS):
+        for x in range(COLS):
 
             neighbors = count_neighbors(grid, x, y)
 
@@ -50,14 +61,44 @@ def update_grid(grid):
                 new_grid[y][x] = grid[y][x]
     return new_grid
 
-# Displays the current state of the grid in the console
-def print_grid(grid):
-    for row in grid:
-        print(''.join(['#' if cell else '.' for cell in row]))
+# Drawing the grid
+def draw_grid(grid, screen):
+    for y in range(ROWS):
+        for x in range(COLS):
+            color = BLACK if grid[y][x] else WHITE
+            pg.draw.rect(screen, color, (x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE))
+            pg.draw.line(screen, (200, 200, 200), (x * CELL_SIZE, 0), (x * CELL_SIZE, HEIGHT))
+            pg.draw.line(screen, (200, 200, 200), (0, y * CELL_SIZE), (WIDTH, y * CELL_SIZE))
 
-grid = init_grid(WIDTH, HEIGHT)
+def main():
+    grid = init_grid(COLS, ROWS)
+    clock = pg.time.Clock()
+    running = True
+    paused = False
 
-for i in range(10):
-    print_grid(grid)
-    print("\n-----\n")
-    grid = update_grid(grid)
+    while running:
+        screen.fill(WHITE)
+
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                running = False
+            if event.type == pg.KEYDOWN:
+                if event.key == pg.K_SPACE:
+                    paused = not paused
+            if event.type == pg.MOUSEBUTTONDOWN:
+                x, y = pg.mouse.get_pos()
+                x //= CELL_SIZE
+                y //= CELL_SIZE
+                grid[y][x] = 1 if grid[y][x] == 0 else 0 # Toggle cell state
+
+        if not paused:
+            grid = update_grid(grid)
+
+        draw_grid(grid, screen)
+        pg.display.flip()
+        clock.tick(10)
+
+    pg.quit()
+
+if __name__ == '__main__':
+    main()
