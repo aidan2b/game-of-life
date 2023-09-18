@@ -31,11 +31,11 @@ def init_grid(width, height):
 
 # Count the number of living neighbors for a given cell
 def count_neighbors(live_cells, x, y):
-    return sum((x + dx, y + dy) in live_cells for dx, dy in NEIGHBORS)
+    return sum(((x + dx) % COLS, (y + dy) % ROWS) in live_cells for dx, dy in NEIGHBORS)
 
 # Update the grid based on the Game of Life rules
 def update_grid(live_cells):
-    potential_cells = live_cells.union({(x + dx, y + dy) for x, y in live_cells for dx, dy in NEIGHBORS})
+    potential_cells = live_cells.union({((x + dx) % COLS, (y + dy) % ROWS) for x, y in live_cells for dx, dy in NEIGHBORS})
     is_alive = lambda cell: (cell in live_cells and 2 <= count_neighbors(live_cells, *cell) <= 3) or count_neighbors(live_cells, *cell) == 3
     return {cell for cell in potential_cells if is_alive(cell)}
 
