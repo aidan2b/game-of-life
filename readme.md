@@ -17,7 +17,7 @@ of Life implementation:
 -   [x] Adjust Simulation Speed: Add a slider or buttons to speed up,
     slow down, or step through the simulation one frame at a time.
 
-# Advanced Features \[2/5\]
+# Advanced Features \[5/5\]
 
 -   [x] Save and Load: Allow users to save their current pattern and
     load it later.
@@ -28,21 +28,21 @@ of Life implementation:
     with a different shade, giving a visual indication of changes.
 -   [x] Statistics: Display the number of living cells, the generation
     number, etc.
--   [ ] Rule Variations: The classic Game of Life is just one rule-set
+-   [X] Rule Variations: The classic Game of Life is just one rule-set
     of cellular automata. Allow users to define their own rules.
 
-# Code Refinement \[/\]
+# Code Refinement \[2/3\]
 
--   [-] Modularization: UI operations, grid handling, and simulation
+-   [X] Modularization: UI operations, grid handling, and simulation
     logic into separate classes or modules.
--   [ ] Documentation: Add inline comments and perhaps a user guide.
+-   [X] Documentation: Add inline comments and perhaps a user guide.
 -   [ ] Error Handling: Add more comprehensive error handling for user
     inputs or file operations.
 
-# Expand Beyond 2D \[/\]
+# Expand Beyond 2D \[0/1\]
 
 -   [ ] 3D version of Conway\'s Game of Life.
 
-# Testing \[/\]
+# Testing \[0/1\]
 
 -   [ ] Adding unit tests for core functionalities.
