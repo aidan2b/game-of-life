@@ -1,6 +1,6 @@
 ## Preview
 
-https://github.com/aidan2b/game-of-life/blob/main/dev/preview_920.mp4
+https://github.com/aidan2b/game-of-life/assets/80802578/bce898ec-b0db-44a4-b20a-1efe19899926
 
 ## Potential improvements
 
