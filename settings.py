@@ -1,0 +1,10 @@
+#!/usr/bin/env python3
+
+WIDTH, HEIGHT = 800, 800
+CELL_SIZE = 10
+ROWS, COLS = HEIGHT // CELL_SIZE, WIDTH // CELL_SIZE
+INITIAL_SPEED, MIN_SPEED, MAX_SPEED = 10, 1, 60
+NEIGHBORS = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
+BOX_WIDTH = WIDTH // 3
+BOX_HEIGHT = 75
+PADDING = 10
