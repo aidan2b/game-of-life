@@ -1,8 +1,6 @@
 ## Preview
 
-<video width="320" height="240" controls>
-  <source src="dev/preview_920.mp4" type="video/mp4">
-</video>
+https://github.com/aidan2b/game-of-life/blob/main/dev/preview_920.mp4
 
 ## Potential improvements
 
